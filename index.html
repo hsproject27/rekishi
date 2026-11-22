@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>札幌南・北志望 歴史 聞き流し＆暗記マスター（厳選50問）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans JP', sans-serif; background-color: #081021; color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+    .gold-gradient { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
+    .red-sheet-hidden { color: transparent !important; background-color: #991b1b; border-radius: 6px; user-select: none; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col max-w-md mx-auto p-4 pb-24">
+
+  <!-- ヘッダー -->
+  <header class="text-center py-3 border-b border-slate-800">
+    <span class="text-xs font-bold tracking-widest text-amber-400">HOKKAIDO HIGH SCHOOL EXAM</span>
+    <h1 class="text-lg font-bold text-white mt-1">札幌南・北志望 歴史暗記マスター</h1>
+    <p class="text-xs text-slate-400 mt-0.5">厳選50問＋北海道史・北方領土 完全版</p>
+  </header>
+
+  <!-- 時代フィルター＆操作バー -->
+  <div class="mt-4 flex flex-wrap gap-1.5 justify-center" id="era-filters">
+    <button onclick="setEra('ALL')" class="era-btn px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500 text-slate-950" data-era="ALL">全50問</button>
+    <button onclick="setEra('古代')" class="era-btn px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300" data-era="古代">古代</button>
+    <button onclick="setEra('中世')" class="era-btn px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300" data-era="中世">中世</button>
+    <button onclick="setEra('近世')" class="era-btn px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300" data-era="近世">近世</button>
+    <button onclick="setEra('近代')" class="era-btn px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300" data-era="近代">近代</button>
+    <button onclick="setEra('現代・北海道')" class="era-btn px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300" data-era="現代・北海道">現代・北海道</button>
+    <button onclick="setEra('WEAK')" class="era-btn px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-rose-400 border border-rose-900" data-era="WEAK">★苦手のみ</button>
+  </div>
+
+  <!-- 進捗＆コントロール -->
+  <div class="mt-4 flex items-center justify-between text-xs text-slate-400 px-1">
+    <span id="progress-text">1 / 50 問目</span>
+    <div class="flex gap-2">
+      <button onclick="toggleRedSheet()" id="red-sheet-btn" class="px-2.5 py-1 rounded bg-red-950 text-red-300 border border-red-800 font-bold">赤シート: OFF</button>
+      <button onclick="toggleWeak()" id="weak-btn" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 font-bold">☆ 苦手登録</button>
+    </div>
+  </div>
+
+  <!-- 問題カード -->
+  <main class="mt-3 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between">
+        <span id="q-era" class="text-xs font-bold px-2 py-0.5 rounded bg-slate-800 text-amber-400">古代</span>
+        <span id="status-badge" class="text-xs font-bold text-emerald-400 hidden">🔊 読み上げ中...</span>
+      </div>
+      <h2 id="q-text" class="mt-3 text-base font-bold leading-relaxed text-white">読み込み中...</h2>
+    </div>
+
+    <!-- 解答・記述ポイントエリア -->
+    <div class="mt-6 pt-4 border-t border-slate-800">
+      <p class="text-xs text-slate-400 mb-1">【解答】</p>
+      <div id="a-box" onclick="revealAnswer()" class="p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+        <p id="a-text" class="text-lg font-bold text-amber-400">解答</p>
+      </div>
+      <p class="text-xs text-slate-400 mt-3 mb-1">【札幌南・北 記述・重要ポイント】</p>
+      <div id="p-box" onclick="revealAnswer()" class="p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer">
+        <p id="p-text" class="text-xs leading-relaxed text-slate-200">ポイント</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- 操作ボタン -->
+  <div class="mt-4 grid grid-cols-3 gap-2">
+    <button onclick="prevQ()" class="py-3 rounded-xl bg-slate-800 font-bold text-sm text-slate-200 active:scale-95">◀ 前へ</button>
+    <button onclick="toggleAutoPlay()" id="play-btn" class="py-3 rounded-xl gold-gradient font-bold text-sm text-slate-950 shadow-lg active:scale-95">▶ 聞き流し開始</button>
+    <button onclick="nextQ()" class="py-3 rounded-xl bg-slate-800 font-bold text-sm text-slate-200 active:scale-95">次へ ▶</button>
+  </div>
+
+  <!-- 速度＆問題追加ボタン -->
+  <div class="mt-3 flex items-center justify-between text-xs text-slate-400">
+    <div class="flex items-center gap-1">
+      <span>速度:</span>
+      <button onclick="setRate(1.0)" class="rate-btn px-2 py-1 rounded bg-amber-500 text-slate-950 font-bold" data-rate="1.0">1.0x</button>
+      <button onclick="setRate(1.25)" class="rate-btn px-2 py-1 rounded bg-slate-800 text-slate-300" data-rate="1.25">1.25x</button>
+      <button onclick="setRate(1.5)" class="rate-btn px-2 py-1 rounded bg-slate-800 text-slate-300" data-rate="1.5">1.5x</button>
+    </div>
+    <button onclick="openAddModal()" class="px-3 py-1.5 rounded bg-slate-800 text-amber-400 font-bold border border-slate-700">＋ 問題を追加</button>
+  </div>
+
+  <!-- 問題追加モーダル -->
+  <div id="add-modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 w-full max-w-sm">
+      <h3 class="text-base font-bold text-amber-400 mb-3">オリジナル問題を追加</h3>
+      <select id="new-era" class="w-full p-2 rounded bg-slate-800 text-sm text-white mb-2">
+        <option value="古代">古代</option>
+        <option value="中世">中世</option>
+        <option value="近世">近世</option>
+        <option value="近代">近代</option>
+        <option value="現代・北海道">現代・北海道</option>
+      </select>
+      <textarea id="new-q" placeholder="問題文を入力" class="w-full p-2 rounded bg-slate-800 text-sm text-white mb-2" rows="2"></textarea>
+      <input id="new-a" type="text" placeholder="解答を入力" class="w-full p-2 rounded bg-slate-800 text-sm text-white mb-2" />
+      <textarea id="new-p" placeholder="記述・解説ポイントを入力" class="w-full p-2 rounded bg-slate-800 text-sm text-white mb-3" rows="2"></textarea>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeAddModal()" class="px-4 py-2 rounded bg-slate-800 text-xs font-bold">閉じる</button>
+        <button onclick="saveNewQuestion()" class="px-4 py-2 rounded bg-amber-500 text-slate-950 text-xs font-bold">保存する</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const DEFAULT_QUESTIONS = [
+  // 古代 (8問)
+  { id: 1, era: "古代", q: "645年、中大兄皇子と中臣鎌足が蘇我氏を倒して始めた政治改革を何というか。", a: "大化の改新", p: "公地公民制を基本とし、豪族が支配していた土地と人民を国家の直接支配とした。" },
+  { id: 2, era: "古代", q: "701年、唐の制度にならって刑罰や政治のきまりを定めた法典を何というか。", a: "大宝律令", p: "これにより日本は律令国家となり、戸籍をもとに口分田を与える班田収授法が整った。" },
+  { id: 3, era: "古代", q: "743年、開墾した土地を永久に自分のものにすることを認めた法令を何というか。", a: "墾田永年私財法", p: "口分田の不足を補うため出されたが、貴族や寺社が荘園を広げるきっかけとなった。" },
+  { id: 4, era: "古代", q: "794年、桓武天皇が仏教勢力の影響を避けるために都を移した場所はどこか。", a: "平安京", p: "現在の京都府。桓武天皇は東北地方の蝦夷を服属させるため坂上田村麻呂を征夷大将軍に任命した。" },
+  { id: 5, era: "古代", q: "藤原氏が娘を天皇のきさきとし、その子を天皇にして政治の実権を握った仕組みを何というか。", a: "摂関政治", p: "幼い天皇のときは摂政、成人後は関白となり、藤原道長・頼通の時代に全盛期を迎えた。" },
+  { id: 6, era: "古代", q: "9〜12世紀にかけて日本風土に合わせて発達した、かな文字や大和絵を特徴とする文化は何か。", a: "国風文化", p: "遣唐使の廃止を背景に発達。紫式部の『源氏物語』や清少納言の『枕草子』が生まれた。" },
+  { id: 7, era: "古代", q: "1086年、白河上皇が藤原氏の力を抑えるために始めた、上皇が政治を行う仕組みを何というか。", a: "院政", p: "上皇の御所（院）を警護する北面の武士が置かれ、武士の政治進出の足がかりとなった。" },
+  { id: 8, era: "古代", q: "1167年、武士として初めて太政大臣となり、日宋貿易を進めた人物は誰か。", a: "平清盛", p: "大輪田泊（現在の神戸港）を改修し、宋の銅銭を輸入して経済力を高めた。" },
+
+  // 中世 (9問)
+  { id: 9, era: "中世", q: "鎌倉幕府と御家人の間で結ばれた、土地を仲立ちとする主従関係を何というか。", a: "御恩と奉公", p: "将軍が先祖からの領地を認め（本領安堵）、新しい領地を与える（新恩給与）のが御恩。" },
+  { id: 10, era: "中世", q: "1232年、執権の北条泰時が御家人どうしの裁判の基準として定めた武家法を何というか。", a: "御成敗式目", p: "武士社会の慣習や道理にもとづいて作られた日本初の武家法で、後の武家法の模範となった。" },
+  { id: 11, era: "中世", q: "1274年と1281年の2度にわたり、元のフビライ・ハンが日本に攻めてきた出来事を何というか。", a: "元寇", p: "集団戦法や火薬兵器に苦戦したが、暴風雨と武士の奮戦で撃退。恩賞不足から幕府が衰退した。" },
+  { id: 12, era: "中世", q: "1297年、生活に苦しむ御家人を救うため、借金の帳消しや売却した土地の無償返還を命じた法令は何か。", a: "永仁の徳政令", p: "御家人に金を貸す者がいなくなり、かえって御家人の生活が苦しくなり幕府への不満が高まった。" },
+  { id: 13, era: "中世", q: "1334年、後醍醐天皇が鎌倉幕府を倒した後に始めた、天皇中心の政治を何というか。", a: "建武の新政", p: "公家や寺社を優遇し武士への恩賞が不公平だったため、足利尊氏が離反し約2年で崩壊した。" },
+  { id: 14, era: "中世", q: "室町幕府3代将軍・足利義満が明との間で行った、正式な貿易船であることを示す合札を使った貿易は何か。", a: "勘合貿易（日明貿易）", p: "海賊（倭寇）と区別するために勘合を用い、日本は銅や刀剣を輸出し、明の銅銭や生糸を輸入した。" },
+  { id: 15, era: "中世", q: "1467年、将軍家の跡継ぎ争いなどをきっかけに京都を中心に11年間続いた戦乱を何というか。", a: "応仁の乱", p: "幕府の権威が失墜し、実力ある下の者が上の者を倒す「下剋上」の戦国時代へ突入した。" },
+  { id: 16, era: "中世", q: "室町時代、農業技術の進歩により同じ耕地で年に2回異なる作物を栽培する農法が広まった。何というか。", a: "二毛作", p: "主に米の裏作として麦が栽培され、牛馬耕や草木灰の肥料利用とあわせて収穫量が大きく増えた。" },
+  { id: 17, era: "中世", q: "室町時代の農村で、農民が団結して共同でおきてを定め、年貢の納入や用水の管理を行った自治組織を何というか。", a: "惣（惣村）", p: "寄合を開いて運営し、不作のときは年貢の減免を求めて土一揆を起こす原動力となった。" },
+
+  // 近世 (11問)
+  { id: 18, era: "近世", q: "織田信長が商工業の発展のために行った、座の特権を廃止し関所を撤廃した政策を何というか。", a: "楽市・楽座", p: "城下町に商人を呼び込み、自由な商業活動を認めることで経済力を高めた。" },
+  { id: 19, era: "近世", q: "豊臣秀吉が全国の田畑の面積や収穫高を統一の基準で調査した政策を何というか。", a: "太閤検地", p: "ますやものさしを統一し、耕作する農民を検地帳に登録して年貢の納入責任者を明確にした。" },
+  { id: 20, era: "近世", q: "豊臣秀吉が農民から武器を取り上げた政策は何か。また、これと太閤検地によって進んだ身分の分離を何というか。", a: "刀狩・兵農分離", p: "一揆を防ぎ農業に専念させる目的で行われ、武士と農民・町人の身分がはっきりと区別された。" },
+  { id: 21, era: "近世", q: "江戸幕府がキリスト教の禁止と貿易の統制を強め、1639年にポルトガル船の来航を禁止して完成した体制を何というか。", a: "鎖国", p: "オランダと中国（清）に限り長崎の出島などで貿易を続け、朝鮮・琉球・アイヌとは交流を保った。" },
+  { id: 22, era: "近世", q: "江戸幕府3代将軍・徳川家光が制度化した、大名を1年おきに江戸と領地に行き来させる制度は何か。", a: "参勤交代", p: "大名の妻子を江戸に住まわせ、莫大な往復費用を負担させることで幕府に反抗する力を弱めた。" },
+  { id: 23, era: "近世", q: "元禄文化の代表作で、人間らしい生き方を描き『好色一代男』などを著した浮世草子の作者は誰か。", a: "井原西鶴", p: "元禄文化は上方（京都・大阪）の町人を中心に栄え、人形浄瑠璃の近松門左衛門も活躍した。" },
+  { id: 24, era: "近世", q: "8代将軍・徳川吉宗が行った享保の改革で、大名に米を納めさせる代わりに参勤交代の江戸滞在を半年縮めた法は何か。", a: "上げ米の制", p: "幕府の財政難を解決するため実施。このほか目安箱の設置や公事方御定書の制定を行った。" },
+  { id: 25, era: "近世", q: "1774年、杉田玄白や前野良沢らがオランダ語の医学書を翻訳して出版した書物は何か。", a: "解体新書", p: "オランダ語を通じてヨーロッパの学術や技術を学ぶ蘭学が発展するきっかけとなった。" },
+  { id: 26, era: "近世", q: "1825年、江戸幕府が日本近海に近づく外国船をためらわず打ち払うよう命じた法令を何というか。", a: "異国船打払令", p: "アヘン戦争で清がイギリスに敗れたことを知り、1842年に薪水給与令へと緩和した。" },
+  { id: 27, era: "近世", q: "1837年、大飢饉に苦しむ人々を救うため、元大坂町奉行所の役人が起こした反乱を何というか。", a: "大塩平八郎の乱", p: "幕府の元役人が武装蜂起したことは幕府に大きな衝撃を与え、水野忠邦の天保の改革につながった。" },
+  { id: 28, era: "近世", q: "1858年、大老の井伊直弼が朝廷の許可を得ずにアメリカと結んだ、関税自主権がなく領事裁判権を認めた条約は何か。", a: "日米修好通商条約", p: "横浜など5港の開港を約束。日本に不利な不平等条約であり、明治時代の最重要課題となった。" },
+
+  // 近代 (12問)
+  { id: 29, era: "近代", q: "1868年、新政府が政治の基本方針を示した5か条の誓文で、「広く会議を興し」に続く言葉は何か。", a: "万機公論に決すべし", p: "すべての政治は公の議論によって決定すべきという意味で、議会政治への方針を示した。" },
+  { id: 30, era: "近代", q: "1871年、新政府が全国の大名の支配地を廃止し、中央から知事を派遣して全国を統一した改革を何というか。", a: "廃藩置県", p: "1869年の版籍奉還に続いて実施され、中央集権体制が確立した。" },
+  { id: 31, era: "近代", q: "1873年、政府が安定した税収を得るため、地価の3％を現金で土地所有者に納めさせた制度を何というか。", a: "地租改正", p: "天候による米の収穫量に左右されずに税収を確保でき、近代的な土地所有権が認められた。" },
+  { id: 32, era: "近代", q: "1874年、板垣退助らが政府に提出した、国民が選んだ代表による議会の開設を求める建白書は何か。", a: "民撰議院設立の建白書", p: "これをきっかけに、藩閥政治を批判し国会開設と憲法制定を求める自由民権運動が全国に広がった。" },
+  { id: 33, era: "近代", q: "1889年に発布された大日本帝国憲法で、国の統治権は誰にあると定められたか。", a: "天皇（天皇主権）", p: "法律の範囲内で人権が認められ、議会の協賛を得て天皇が法律を定める立憲君主制がとられた。" },
+  { id: 34, era: "近代", q: "1894年の日清戦争の講和条約である下関条約で、日本が清から得た賠償金を使って建設した製鉄所は何か。", a: "八幡製鉄所", p: "福岡県に建設され、日本の鉄鋼業の発展と産業革命（重工業化）を大きく進めた。" },
+  { id: 35, era: "近代", q: "1905年の日露戦争の講和条約（ポーツマス条約）で賠償金が得られなかったことに不満を持った民衆が起こした暴動は何か。", a: "日比谷焼打事件", p: "日本は韓国での優越権や南樺太、旅順・大連の租借権などを得たが、賠償金は得られなかった。" },
+  { id: 36, era: "近代", q: "1911年、外務大臣の小村寿太郎がアメリカとの条約改正に成功し、日本が完全に回復した権利は何か。", a: "関税自主権", p: "1894年の陸奥宗光による領事裁判権の撤廃に続き、約50年越しで完全な条約改正を達成した。" },
+  { id: 37, era: "近代", q: "第一次世界大戦中の1918年、シベリア出兵を見越した米の買い占めによる米価急騰から富山県で始まった騒動は何か。", a: "米騒動", p: "全国に広がり寺内正毅内閣が退陣。初の本格的な政党内閣である原敬内閣が誕生するきっかけとなった。" },
+  { id: 38, era: "近代", q: "1925年、満25歳以上のすべての男子に選挙権を与える普通選挙法と同時に制定された、社会主義運動などを取り締まる法律は何か。", a: "治安維持法", p: "国体（天皇制）の変革や私有財産制の否定を目的とする結社・運動を厳しく罰した。" },
+  { id: 39, era: "近代", q: "1931年、関東軍が奉天郊外の柳条湖で南満州鉄道の線路を爆破したことを口実に始めた軍事行動を何というか。", a: "満州事変", p: "翌1932年に満州国を建国。国際連盟のリットン調査団に認められず、1933年に日本は国際連盟を脱退した。" },
+  { id: 40, era: "近代", q: "1938年、日中戦争の長期化にともない、政府が議会の承認なしに物資や労働力を統制できるようにした法律は何か。", a: "国家総動員法", p: "戦争遂行のために国民の生活や経済活動のすべてを政府が統制できる体制がつくられた。" },
+
+  // 現代・北海道・北方領土 (10問)
+  { id: 41, era: "現代・北海道", q: "1669年、松前藩の不当な交易に不満を持ったアイヌの人々が団結して起こした戦いの指導者は誰か。", a: "シャクシャイン", p: "新ひだか町（旧静内町）などを拠点に蜂起したが、松前藩の和睦の偽計により殺害され鎮圧された。" },
+  { id: 42, era: "現代・北海道", q: "1855年、江戸幕府とロシアの間で結ばれ、択捉島とウルップ島の間に国境を定めた条約は何か。", a: "日露和親条約", p: "この条約により、歯舞群島・色丹島・国後島・択捉島の北方四島が日本固有の領土として国際的に確認された。" },
+  { id: 43, era: "現代・北海道", q: "1869年、政府が蝦夷地を「北海道」と改称し、開拓を進めるために札幌に設置した役所を何というか。", a: "開拓使", p: "黒田清隆が開拓次官（のち長官）となり、アメリカのケプロンらお雇い外国人を招いて開発を進めた。" },
+  { id: 44, era: "現代・北海道", q: "明治時代、北海道の防衛と開拓を兼ねて各地に移住し、平時は農業、有事は兵士として働いた人々を何というか。", a: "屯田兵", p: "札幌の琴似や江別、旭川などに兵村がつくられ、原野の開拓やインフラ整備に大きな役割を果たした。" },
+  { id: 45, era: "現代・北海道", q: "1899年、政府がアイヌの人々に農業を奨励する名目で制定し、独自の文化や言語を奪う結果となった法律は何か。", a: "北海道旧土人保護法", p: "同化政策が進められたが、1997年に廃止されアイヌ文化振興法が制定、2019年にアイヌ施策推進法が成立した。" },
+  { id: 46, era: "現代・北海道", q: "1875年、日本が樺太全土をロシアの領土と認める代わりに、千島列島全島を日本領とした条約は何か。", a: "樺太・千島交換条約", p: "北方領土はこれ以前（1855年）から日本の領土であり、交換の対象ではないことが重要。" },
+  { id: 47, era: "現代・北海道", q: "戦後、GHQの指令で行われた財閥解体・農地改革・労働改革の3つの改革を総称して何というか。", a: "経済の民主化", p: "農地改革では不在地主の農地を政府が買い上げて小作人に安く売り渡し、自作農が大幅に増えた。" },
+  { id: 48, era: "現代・北海道", q: "1951年、日本が独立を回復したサンフランシスコ平和条約と同時にアメリカと結んだ条約は何か。", a: "日米安全保障条約", p: "独立後もアメリカ軍が日本国内に駐留することを認め、冷戦下における日本の安全保障の軸となった。" },
+  { id: 49, era: "現代・北海道", q: "1956年、日本とソ連の間で調印され、国交回復と日本の国際連合加盟を実現した宣言は何か。", a: "日ソ共同宣言", p: "平和条約締結後に歯舞群島と色丹島を日本に引き渡すことが明記されたが、現在も平和条約は未締結。" },
+  { id: 50, era: "現代・北海道", q: "1950年代半ばから1973年の石油危機まで続いた高度経済成長で、都市への人口集中と反対に農村で深刻化した問題は何か。", a: "過疎化", p: "都市部では公害問題や過密化が進み、地方では若者の流出による過疎化が大きな社会問題となった。" }
+];
+
+let questions = JSON.parse(localStorage.getItem('sapporo_hist_q_v2')) || DEFAULT_QUESTIONS;
+let weakIds = JSON.parse(localStorage.getItem('sapporo_hist_weak_v2')) || [];
+let currentEra = 'ALL';
+let currentIndex = 0;
+let isRedSheet = false;
+let isAutoPlaying = false;
+let speechRate = 1.0;
+let autoTimer = null;
+
+function getFiltered() {
+  if (currentEra === 'ALL') return questions;
+  if (currentEra === 'WEAK') return questions.filter(q => weakIds.includes(q.id));
+  return questions.filter(q => q.era === currentEra);
+}
+
+function render() {
+  const list = getFiltered();
+  if (list.length === 0) {
+    document.getElementById('progress-text').textContent = '0 / 0 問目';
+    document.getElementById('q-era').textContent = '-';
+    document.getElementById('q-text').textContent = '該当する問題がありません。「全50問」に戻してください。';
+    document.getElementById('a-text').textContent = '-';
+    document.getElementById('p-text').textContent = '-';
+    return;
+  }
+  if (currentIndex >= list.length) currentIndex = 0;
+  const item = list[currentIndex];
+
+  document.getElementById('progress-text').textContent = `${currentIndex + 1} / ${list.length} 問目`;
+  document.getElementById('q-era').textContent = item.era;
+  document.getElementById('q-text').textContent = item.q;
+  document.getElementById('a-text').textContent = item.a;
+  document.getElementById('p-text').textContent = item.p;
+
+  const aEl = document.getElementById('a-text');
+  const pEl = document.getElementById('p-text');
+  if (isRedSheet) {
+    aEl.classList.add('red-sheet-hidden');
+    pEl.classList.add('red-sheet-hidden');
+  } else {
+    aEl.classList.remove('red-sheet-hidden');
+    pEl.classList.remove('red-sheet-hidden');
+  }
+
+  const weakBtn = document.getElementById('weak-btn');
+  if (weakIds.includes(item.id)) {
+    weakBtn.textContent = '★ 苦手解除';
+    weakBtn.classList.add('bg-rose-900', 'text-rose-200');
+  } else {
+    weakBtn.textContent = '☆ 苦手登録';
+    weakBtn.classList.remove('bg-rose-900', 'text-rose-200');
+  }
+}
+
+function revealAnswer() {
+  document.getElementById('a-text').classList.remove('red-sheet-hidden');
+  document.getElementById('p-text').classList.remove('red-sheet-hidden');
+}
+
+function toggleRedSheet() {
+  isRedSheet = !isRedSheet;
+  const btn = document.getElementById('red-sheet-btn');
+  btn.textContent = isRedSheet ? '赤シート: ON' : '赤シート: OFF';
+  render();
+}
+
+function toggleWeak() {
+  const list = getFiltered();
+  if (!list.length) return;
+  const id = list[currentIndex].id;
+  if (weakIds.includes(id)) {
+    weakIds = weakIds.filter(w => w !== id);
+  } else {
+    weakIds.push(id);
+  }
+  localStorage.setItem('sapporo_hist_weak_v2', JSON.stringify(weakIds));
+  render();
+}
+
+function setEra(era) {
+  stopAutoPlay();
+  currentEra = era;
+  currentIndex = 0;
+  document.querySelectorAll('.era-btn').forEach(b => {
+    if (b.dataset.era === era) {
+      b.classList.add('bg-amber-500', 'text-slate-950');
+      b.classList.remove('bg-slate-800', 'text-slate-300');
+    } else {
+      b.classList.remove('bg-amber-500', 'text-slate-950');
+      b.classList.add('bg-slate-800', 'text-slate-300');
+    }
+  });
+  render();
+}
+
+function setRate(r) {
+  speechRate = r;
+  document.querySelectorAll('.rate-btn').forEach(b => {
+    if (parseFloat(b.dataset.rate) === r) {
+      b.classList.add('bg-amber-500', 'text-slate-950', 'font-bold');
+      b.classList.remove('bg-slate-800', 'text-slate-300');
+    } else {
+      b.classList.remove('bg-amber-500', 'text-slate-950', 'font-bold');
+      b.classList.add('bg-slate-800', 'text-slate-300');
+    }
+  });
+}
+
+function prevQ() {
+  const list = getFiltered();
+  if (!list.length) return;
+  currentIndex = (currentIndex - 1 + list.length) % list.length;
+  render();
+  if (isAutoPlaying) playCurrent();
+}
+
+function nextQ() {
+  const list = getFiltered();
+  if (!list.length) return;
+  currentIndex = (currentIndex + 1) % list.length;
+  render();
+  if (isAutoPlaying) playCurrent();
+}
+
+function speakText(text, callback) {
+  window.speechSynthesis.cancel();
+  const uttr = new SpeechSynthesisUtterance(text);
+  uttr.lang = 'ja-JP';
+  uttr.rate = speechRate;
+  uttr.onend = () => { if (callback) callback(); };
+  uttr.onerror = () => { if (callback) callback(); };
+  window.speechSynthesis.speak(uttr);
+}
+
+function playCurrent() {
+  clearTimeout(autoTimer);
+  const list = getFiltered();
+  if (!list.length || !isAutoPlaying) return;
+  const item = list[currentIndex];
+  const badge = document.getElementById('status-badge');
+  badge.classList.remove('hidden');
+  badge.textContent = '🔊 問題読み上げ中...';
+
+  if (isRedSheet) render();
+
+  speakText(`問題。${item.q}`, () => {
+    if (!isAutoPlaying) return;
+    badge.textContent = '⏳ 思考タイム（3秒）...';
+    autoTimer = setTimeout(() => {
+      if (!isAutoPlaying) return;
+      revealAnswer();
+      badge.textContent = '🔊 解答・解説中...';
+      speakText(`答えは、${item.a}。ポイントは、${item.p}`, () => {
+        if (!isAutoPlaying) return;
+        autoTimer = setTimeout(() => {
+          if (!isAutoPlaying) return;
+          currentIndex = (currentIndex + 1) % list.length;
+          render();
+          playCurrent();
+        }, 1200);
+      });
+    }, 3000);
+  });
+}
+
+function toggleAutoPlay() {
+  if (isAutoPlaying) {
+    stopAutoPlay();
+  } else {
+    isAutoPlaying = true;
+    const btn = document.getElementById('play-btn');
+    btn.textContent = '⏹ 停止する';
+    btn.classList.remove('gold-gradient', 'text-slate-950');
+    btn.classList.add('bg-rose-600', 'text-white');
+    playCurrent();
+  }
+}
+
+function stopAutoPlay() {
+  isAutoPlaying = false;
+  clearTimeout(autoTimer);
+  window.speechSynthesis.cancel();
+  const btn = document.getElementById('play-btn');
+  btn.textContent = '▶ 聞き流し開始';
+  btn.classList.add('gold-gradient', 'text-slate-950');
+  btn.classList.remove('bg-rose-600', 'text-white');
+  document.getElementById('status-badge').classList.add('hidden');
+}
+
+function openAddModal() { document.getElementById('add-modal').classList.replace('hidden', 'flex'); }
+function closeAddModal() { document.getElementById('add-modal').classList.replace('flex', 'hidden'); }
+
+function saveNewQuestion() {
+  const era = document.getElementById('new-era').value;
+  const q = document.getElementById('new-q').value.trim();
+  const a = document.getElementById('new-a').value.trim();
+  const p = document.getElementById('new-p').value.trim() || '重要事項';
+  if (!q || !a) return alert('問題文と解答を入力してください');
+  questions.push({ id: Date.now(), era, q, a, p });
+  localStorage.setItem('sapporo_hist_q_v2', JSON.stringify(questions));
+  document.getElementById('new-q').value = '';
+  document.getElementById('new-a').value = '';
+  document.getElementById('new-p').value = '';
+  closeAddModal();
+  setEra('ALL');
+  currentIndex = questions.length - 1;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
